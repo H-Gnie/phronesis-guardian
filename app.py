@@ -51,11 +51,18 @@ col3.metric("가치 발굴 성공률", "98%", "Level Up")
 st.divider()
 
 # ---------------------------------------------------------
-# [연결] 뇌(Brain) 연결
+# [연결] 뇌(Brain) 연결 - (수정됨: 보안 금고 사용)
 # ---------------------------------------------------------
-API_KEY = "AIzaSyDlTX-JaNtI4W8GngNHSl2VkT6G7GUG0x0" 
+try:
+    # 1. 금고(Secrets)에서 열쇠를 꺼내옵니다.
+    API_KEY = st.secrets["GEMINI_API_KEY"]
+except Exception as e:
+    st.error("🚨 보안 키 오류: Streamlit Secrets에 키가 설정되지 않았습니다.")
+    st.stop()
+
 genai.configure(api_key=API_KEY)
 
+# 2. (이 부분은 지우면 안 됩니다!) 시스템 프롬프트 파일 읽기
 try:
     with open("system_prompt.md", "r", encoding="utf-8") as f:
         system_instruction = f.read()
@@ -63,6 +70,7 @@ except FileNotFoundError:
     st.error("시스템 프롬프트가 없습니다.")
     st.stop()
 
+# 3. 모델 설정
 model = genai.GenerativeModel(
     model_name="gemini-flash-latest",
     system_instruction=system_instruction
