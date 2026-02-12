@@ -6,61 +6,94 @@ import time
 # [설정] 페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Archetype Explorer",
-    page_icon="🗺️",
+    page_title="Celestial Navigator",
+    page_icon="🌌",
     layout="wide"
 )
 
 # ---------------------------------------------------------
-# [스타일] CSS: 카드형 버튼, 진행바, 폰트 디자인
+# [스타일] CSS: Deep Navy & Gold (Celestial Mood)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    .big-font { font-size:24px !important; font-weight: bold; color: #1E3A8A; }
-    .scenario-text { font-size:18px; line-height:1.6; color: #333; background-color:#F3F4F6; padding:20px; border-radius:10px; margin-bottom:20px; }
-    .stButton>button { 
-        width: 100%; 
-        height: 100px; 
-        border-radius: 15px; 
-        border: 2px solid #E5E7EB; 
-        font-size: 18px; 
-        transition: all 0.3s;
+    /* 전체 배경 */
+    .stApp {
+        background: radial-gradient(circle at center, #1B2735 0%, #090A0F 100%);
+        color: #E6F1FF;
     }
-    .stButton>button:hover { 
-        border-color: #3B82F6; 
-        background-color: #EFF6FF; 
-        transform: translateY(-2px);
+    
+    /* 텍스트 스타일 */
+    h1, h2, h3 {
+        color: #F6E05E !important;
+        text-shadow: 0 0 15px rgba(246, 224, 94, 0.6);
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+    
+    /* 시나리오 박스 */
+    .scenario-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(246, 224, 94, 0.3);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        font-size: 20px;
+        line-height: 1.8;
+        color: #E6F1FF;
+        text-align: center;
+    }
+
+    /* 버튼 스타일: 감각적인 텍스트 강조 */
+    .stButton>button {
+        width: 100%;
+        height: 120px;
+        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+        color: #F6E05E;
+        border: 1px solid rgba(246, 224, 94, 0.3);
+        border-radius: 20px;
+        font-size: 22px;
+        font-weight: 500;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .stButton>button:hover {
+        background: rgba(246, 224, 94, 0.1);
+        border-color: #F6E05E;
+        color: #FFF;
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 0 20px rgba(246, 224, 94, 0.4);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# [상태 관리] 세션 스테이트 초기화
+# [상태 관리]
 # ---------------------------------------------------------
 if "step" not in st.session_state:
-    st.session_state.step = 1  # 1:장소선택, 2:도구선택, 3:대화시작
+    st.session_state.step = 1 
 if "archetype" not in st.session_state:
     st.session_state.archetype = {"loc": "", "tool": "", "loc_desc": "", "tool_desc": ""}
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # ---------------------------------------------------------
-# [연결] Gemini API 연결 (Secrets 사용)
+# [연결] Gemini API
 # ---------------------------------------------------------
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except Exception as e:
-    st.error("🚨 보안 키 오류: Streamlit Secrets를 확인하세요.")
-    st.stop()
+    # 개발용 예외처리
+    st.warning("⚠️ Dev Mode: Secrets를 찾을 수 없습니다.")
+    API_KEY = "YOUR_KEY_HERE"
 
 genai.configure(api_key=API_KEY)
 
-# 시스템 프롬프트 로드
 try:
     with open("system_prompt.md", "r", encoding="utf-8") as f:
         system_instruction = f.read()
 except FileNotFoundError:
-    st.error("시스템 프롬프트가 없습니다.")
+    st.error("🚨 시스템 프롬프트가 없습니다.")
     st.stop()
 
 model = genai.GenerativeModel(
@@ -69,145 +102,192 @@ model = genai.GenerativeModel(
 )
 
 # ---------------------------------------------------------
-# [UI 구성] 헤더 및 진행바
+# [UI 구성] 헤더
 # ---------------------------------------------------------
-st.title("🗺️ Self-Discovery to Product")
-st.caption("당신의 경험을 세계관이 담긴 시나리오로 해석합니다.")
+st.title("🌌 Celestial Navigator")
+st.markdown("### :sparkles: 당신의 무의식이 선택한 별자리")
 
-# 진행률 표시 (Step에 따라 33%, 66%, 100%)
 progress_value = 33 if st.session_state.step == 1 else (66 if st.session_state.step == 2 else 100)
-st.progress(progress_value, text=f"탐험 진행률: {progress_value}%")
+st.progress(progress_value, text=f"항해 진행률: {progress_value}%")
 
 st.divider()
 
 # ---------------------------------------------------------
-# [Phase 1] 정체성 탐색 - 고대 도시
+# [Phase 1] 정체성 탐색 - 블라인드 선택
 # ---------------------------------------------------------
 if st.session_state.step == 1:
-    st.markdown('<p class="big-font">Phase 1. 잊혀진 고대 도시</p>', unsafe_allow_html=True)
-    st.markdown('<div class="scenario-text">당신은 안개에 싸인 잊혀진 고대 도시에 도착했습니다.<br>이곳에 머물 수 있는 시간은 단 3시간.<br>본능적으로 당신의 발길이 향하는 곳은 어디입니까?</div>', unsafe_allow_html=True)
+    st.markdown("""
+    <div class='scenario-box'>
+        "눈을 감고 상상해 보세요.<br>
+        당신은 지금 낯선 행성의 한가운데 서 있습니다.<br>
+        어디선가 바람이 불어오고, <b>가장 먼저 당신의 감각을 자극하는 것</b>은 무엇입니까?"
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
+    
     with col1:
-        if st.button("💰 시장과 광장\n(사람, 교류, 흐름)"):
+        if st.button("🗣️ 시끌벅적한 사람들의\n외침과 열기"):
+            st.toast("✨ 무의식의 흐름을 따라 이동합니다...", icon="🚀")
+            time.sleep(0.5)
             st.session_state.archetype["loc"] = "시장"
             st.session_state.archetype["loc_desc"] = "연결과 소통"
             st.session_state.step = 2
             st.rerun()
-        if st.button("📚 도서관과 기록실\n(원칙, 지식, 체계)"):
+            
+        if st.button("📖 오래된 종이 냄새와\n무거운 정적"):
+            st.toast("✨ 무의식의 흐름을 따라 이동합니다...", icon="🚀")
+            time.sleep(0.5)
             st.session_state.archetype["loc"] = "도서관"
             st.session_state.archetype["loc_desc"] = "시스템과 철학"
             st.session_state.step = 2
             st.rerun()
+            
     with col2:
-        if st.button("🏠 주거지와 부엌\n(생활, 돌봄, 디테일)"):
+        if st.button("🍲 갓 구운 빵 냄새와\n따스한 온기"):
+            st.toast("✨ 무의식의 흐름을 따라 이동합니다...", icon="🚀")
+            time.sleep(0.5)
             st.session_state.archetype["loc"] = "주거지"
             st.session_state.archetype["loc_desc"] = "공감과 디테일"
             st.session_state.step = 2
             st.rerun()
-        if st.button("🛠️ 공방과 대장간\n(기술, 해결, 창조)"):
+            
+        if st.button("🔨 날카로운 금속 소리와\n뜨거운 불꽃"):
+            st.toast("✨ 무의식의 흐름을 따라 이동합니다...", icon="🚀")
+            time.sleep(0.5)
             st.session_state.archetype["loc"] = "공방"
             st.session_state.archetype["loc_desc"] = "문제해결과 기술"
             st.session_state.step = 2
             st.rerun()
 
 # ---------------------------------------------------------
-# [Phase 2] 도구 발견 - 역량 파악
+# [Phase 2] 도구 발견 - 블라인드 선택
 # ---------------------------------------------------------
 elif st.session_state.step == 2:
-    st.markdown('<p class="big-font">Phase 2. 낡은 가죽 가방</p>', unsafe_allow_html=True)
     loc_name = st.session_state.archetype['loc']
-    st.markdown(f'<div class="scenario-text">당신은 <b>[{loc_name}]</b>에 도착했습니다.<br>그곳에서 낡은 가죽 가방을 발견하고 열어봅니다.<br>가장 먼저 손에 잡힌 도구는 무엇입니까?</div>', unsafe_allow_html=True)
+    
+    bridge_texts = {
+        "시장": "소음과 열기를 선택한 당신은, <b>흐름과 변화</b>를 두려워하지 않는 모험가입니다.<br>이제 그 혼란 속에서 살아남기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "도서관": "정적과 지식을 선택한 당신은, <b>본질과 이치</b>를 탐구하는 현자입니다.<br>이제 그 깊은 사유를 완성하기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "주거지": "온기와 냄새를 선택한 당신은, <b>사람과 마음</b>을 먼저 살피는 치유자입니다.<br>이제 그 소중한 것들을 지키기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "공방": "불꽃과 소리를 선택한 당신은, <b>변화와 창조</b>를 즐기는 혁명가입니다.<br>이제 무언가를 만들어내기 위해 본능적으로 집어 든 물건이 있습니다."
+    }
+    current_bridge = bridge_texts.get(loc_name, "당신의 무의식이 이끄는 곳에 도착했습니다.")
+
+    st.markdown(f"""
+    <div class='scenario-box'>
+        "{current_bridge}<br><br>
+        낡은 가방 안에는 네 가지 물건이 들어있습니다.<br>
+        무엇인지 확인하지 않고, <b>손끝에 닿는 촉감만으로</b> 하나를 꺼냅니다."
+    </div>
+    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
+    
     with col1:
-        if st.button("🔍 돋보기\n(분석, 검증, 발견)"):
+        if st.button("🔍 차갑고 매끄러운\n유리 렌즈"):
+            st.toast("💫 운명의 파편을 획득했습니다!", icon="✨")
+            time.sleep(0.5)
             st.session_state.archetype["tool"] = "돋보기"
             st.session_state.archetype["tool_desc"] = "데이터와 분석"
             st.session_state.step = 3
             st.rerun()
-        if st.button("🧭 나침반\n(방향, 기획, 전략)"):
+            
+        if st.button("🧭 끊임없이 흔들리는\n가느다란 바늘"):
+            st.toast("💫 운명의 파편을 획득했습니다!", icon="✨")
+            time.sleep(0.5)
             st.session_state.archetype["tool"] = "나침반"
             st.session_state.archetype["tool_desc"] = "전략과 기획"
             st.session_state.step = 3
             st.rerun()
+            
     with col2:
-        if st.button("✒️ 깃펜\n(기록, 설득, 스토리)"):
+        if st.button("✒️ 끝이 뾰족하고 가벼운\n새의 깃털"):
+            st.toast("💫 운명의 파편을 획득했습니다!", icon="✨")
+            time.sleep(0.5)
             st.session_state.archetype["tool"] = "깃펜"
             st.session_state.archetype["tool_desc"] = "브랜딩과 마케팅"
             st.session_state.step = 3
             st.rerun()
-        if st.button("🔧 수리도구\n(개선, 운영, 최적화)"):
+            
+        if st.button("🔧 묵직하고 기름때 묻은\n쇠막대"):
+            st.toast("💫 운명의 파편을 획득했습니다!", icon="✨")
+            time.sleep(0.5)
             st.session_state.archetype["tool"] = "수리도구"
             st.session_state.archetype["tool_desc"] = "최적화와 실행"
             st.session_state.step = 3
             st.rerun()
 
 # ---------------------------------------------------------
-# [Phase 3] 가치 증명 - AI 인터뷰
+# [Phase 3] 가치 증명 - 감정의 거울 (v1.5 로직 적용)
 # ---------------------------------------------------------
 elif st.session_state.step == 3:
-    # 1. AI의 첫 질문 생성 (최초 1회만 실행)
     if not st.session_state.messages:
         loc = st.session_state.archetype['loc']
         tool = st.session_state.archetype['tool']
         
-        # 사용자에게 보여줄 안내 문구
+        # [수정됨] v1.5: '내면으로의 초대' - 평가가 아닌 공감으로 시작
         intro_text = f"""
-        📜 **탐험 보고서**
-        - **방문 구역:** {loc} ({st.session_state.archetype['loc_desc']})
-        - **획득 도구:** {tool} ({st.session_state.archetype['tool_desc']})
+        🕯️ **내면으로의 초대**
         
-        가치 기록가가 당신의 선택을 분석하여 '원형(Archetype)'을 정의하고 있습니다...
+        당신은 본능적으로 **[{loc}]**으로 향했고, 손에 **[{tool}]**을 쥐었습니다.
+        
+        이 선택은 우연이 아닙니다. 당신의 무의식이 그곳에서 무언가를 느꼈기 때문입니다.
+        이제, 그 선택 뒤에 숨겨진 당신의 진짜 마음을 들여다보겠습니다.
         """
-        st.info(intro_text)
+        st.info(intro_text, icon="🕯️")
         
-        # AI에게 보낼 첫 프롬프트 (화면엔 안 보이고 백그라운드 전송)
-        initial_prompt = f"나는 고대 도시에서 [{loc}]을(를) 선택했고, 가방에서 [{tool}]을(를) 꺼냈어. 나의 원형(Archetype)을 정의하고, 내 실제 경험을 묻는 첫 질문을 던져줘."
+        # [수정됨] AI에게 보내는 첫 지령: '감정 코칭'과 '거울 기법' 지시
+        initial_prompt = f"""
+        사용자는 [{loc}]을 선택했고, [{tool}]을 집어들었어.
+        
+        [대화의 대원칙]에 따라 대화를 시작해줘.
+        1. 사용자의 선택을 비난하거나 평가하지 마.
+        2. 그 선택을 했을 때 **'어떤 기분(How it felt)'**이었는지 조심스럽게 물어봐.
+        3. 정답을 맞히려고 하지 말고, 사용자의 내면을 비추는 거울처럼 행동해.
+        
+        첫 마디 예시: "그 시끄러운 시장 속에서 차가운 렌즈를 쥐었을 때, 어떤 마음이 드셨나요? 불안함이었나요, 아니면 호기심이었나요?"
+        """
         
         try:
-            with st.spinner("가치 기록가가 당신의 기록을 읽고 있습니다..."):
+            with st.spinner("별자리 안내자가 당신의 마음을 읽고 있습니다..."):
                 chat = model.start_chat(history=[])
                 response = chat.send_message(initial_prompt)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"통신 오류 발생: {e}")
 
-    # 2. 채팅 인터페이스 표시
-    st.markdown('<p class="big-font">Phase 3. 가치 증명</p>', unsafe_allow_html=True)
+    st.markdown("### 🗣️ 심층 대화: 당신의 마음을 이야기해주세요")
     
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
+        with st.chat_message(message["role"], avatar="🧑‍🚀" if message["role"] == "user" else "🕯️"):
             st.markdown(message["content"])
 
-    # 3. 사용자 입력 처리
-    if prompt := st.chat_input("당신의 경험을 들려주세요..."):
+    if prompt := st.chat_input("그때의 기분, 혹은 떠오르는 기억을 적어주세요..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar="🧑‍🚀"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant"):
+        with st.chat_message("assistant", avatar="🕯️"):
             message_placeholder = st.empty()
-            message_placeholder.markdown("✍️ *기록 중...*")
+            message_placeholder.markdown("Listening...")
             
             try:
-                # 대화 히스토리 구성
                 history = []
-                # 시스템 프롬프트는 model 생성 시 들어갔으므로, 여기선 대화 내역만
                 for msg in st.session_state.messages:
                     role = "user" if msg["role"] == "user" else "model"
                     history.append({"role": role, "parts": [msg["content"]]})
                 
-                chat = model.start_chat(history=history[:-1]) # 마지막 유저 메시지 제외하고 히스토리 전달
-                response = chat.send_message(prompt) # 마지막 메시지 전송
+                chat = model.start_chat(history=history[:-1]) 
+                response = chat.send_message(prompt) 
                 
                 message_placeholder.markdown(response.text)
                 st.session_state.messages.append({"role": "assistant", "content": response.text})
                 
-                # 결과(JSON) 감지 시 축하 이펙트
+                # 결과(JSON) 감지
                 if "{" in response.text and "}" in response.text and "신뢰도" in response.text:
                     st.balloons()
-                    st.success("🎉 탐험이 완료되었습니다! 당신의 고유한 가치가 기록되었습니다.")
+                    st.success("✨ 당신이라는 우주가 발견되었습니다.", icon="🌌")
                     
             except Exception as e:
-                message_placeholder.error(f"Error: {e}")
+                message_placeholder.error(f"전송 오류: {e}")
