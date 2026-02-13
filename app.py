@@ -12,57 +12,91 @@ st.set_page_config(
 )
 
 # ---------------------------------------------------------
-# [스타일] CSS: Deep Navy & Gold (Celestial Mood)
+# [스타일] CSS: High Contrast & Neon Glow
 # ---------------------------------------------------------
 st.markdown("""
 <style>
-    /* 전체 배경 */
+    /* 1. 배경 및 기본 폰트 설정 (Pure White 적용) */
     .stApp {
-        background: radial-gradient(circle at center, #1B2735 0%, #090A0F 100%);
-        color: #E6F1FF;
+        background: radial-gradient(circle at center, #05080f 0%, #000000 100%); /* 더 깊은 블랙으로 변경 */
+        color: #FFFFFF !important;
+        font-size: 1.15rem; /* 기본 폰트 사이즈 확대 */
+        line-height: 1.6;
     }
     
-    /* 텍스트 스타일 */
-    h1, h2, h3 {
-        color: #F6E05E !important;
-        text-shadow: 0 0 15px rgba(246, 224, 94, 0.6);
-        font-family: 'Helvetica Neue', sans-serif;
-    }
-    
-    /* 시나리오 박스 */
-    .scenario-box {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(246, 224, 94, 0.3);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        padding: 30px;
-        border-radius: 20px;
-        margin-bottom: 30px;
-        font-size: 20px;
-        line-height: 1.8;
-        color: #E6F1FF;
-        text-align: center;
+    /* 모든 텍스트 강제 화이트 적용 */
+    p, li, span, div {
+        color: #FFFFFF !important;
     }
 
-    /* 버튼 스타일: 감각적인 텍스트 강조 */
+    /* 2. 시각적 계층 구조 - 제목 (Bright Gold) */
+    h1, h2, h3 {
+        color: #FFD700 !important; /* 순금색 */
+        font-weight: 800 !important; /* Extra Bold */
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.6); /* 발광 효과 */
+        letter-spacing: 1.5px;
+    }
+    
+    /* 3. 컴포넌트 스타일링 - 시나리오 박스 */
+    .scenario-box {
+        background: rgba(255, 255, 255, 0.08); /* 배경 투명도 조절 */
+        border: 1px solid rgba(0, 210, 255, 0.5); /* 네온 블루 테두리 */
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        font-size: 1.25rem; /* 글씨 크기 확대 */
+        font-weight: 500;
+        text-align: center;
+        color: #FFFFFF !important;
+    }
+    
+    /* 강조 문구 (Highlight) */
+    strong {
+        color: #00D2FF !important; /* 네온 블루 */
+        font-weight: 700;
+    }
+
+    /* 4. 챗 메시지 박스 스타일링 (반투명 화이트 & 테두리) */
+    [data-testid="stChatMessage"] {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    /* 유저 메시지 배경 구분 (선택사항: 약간 다르게) */
+    [data-testid="stChatMessage"][data-testid="user"] {
+        background-color: rgba(0, 210, 255, 0.15) !important;
+        border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+
+    /* 버튼 스타일: 가독성 극대화 */
     .stButton>button {
         width: 100%;
-        height: 120px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
-        color: #F6E05E;
-        border: 1px solid rgba(246, 224, 94, 0.3);
-        border-radius: 20px;
-        font-size: 22px;
-        font-weight: 500;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 110px;
+        background: linear-gradient(135deg, rgba(20, 20, 20, 0.9) 0%, rgba(50, 50, 50, 0.9) 100%);
+        color: #FFD700 !important; /* 골드 텍스트 */
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        font-size: 1.4rem !important; /* 버튼 글씨 대폭 확대 */
+        font-weight: 700 !important;
+        transition: all 0.3s ease;
     }
     
     .stButton>button:hover {
-        background: rgba(246, 224, 94, 0.1);
-        border-color: #F6E05E;
-        color: #FFF;
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 0 20px rgba(246, 224, 94, 0.4);
+        background: rgba(255, 215, 0, 0.15);
+        border-color: #FFD700;
+        color: #FFFFFF !important;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.7);
+        transform: scale(1.02);
+    }
+
+    /* 인포 박스 (Intro) 스타일 */
+    .stInfo {
+        background-color: rgba(0, 0, 0, 0.6) !important;
+        border: 1px solid #FFD700 !important;
+        color: #FFFFFF !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -83,7 +117,6 @@ if "messages" not in st.session_state:
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except Exception as e:
-    # 개발용 예외처리
     st.warning("⚠️ Dev Mode: Secrets를 찾을 수 없습니다.")
     API_KEY = "YOUR_KEY_HERE"
 
@@ -120,7 +153,7 @@ if st.session_state.step == 1:
     <div class='scenario-box'>
         "눈을 감고 상상해 보세요.<br>
         당신은 지금 낯선 행성의 한가운데 서 있습니다.<br>
-        어디선가 바람이 불어오고, <b>가장 먼저 당신의 감각을 자극하는 것</b>은 무엇입니까?"
+        어디선가 바람이 불어오고, <strong>가장 먼저 당신의 감각을 자극하는 것</strong>은 무엇입니까?"
     </div>
     """, unsafe_allow_html=True)
 
@@ -167,10 +200,10 @@ elif st.session_state.step == 2:
     loc_name = st.session_state.archetype['loc']
     
     bridge_texts = {
-        "시장": "소음과 열기를 선택한 당신은, <b>흐름과 변화</b>를 두려워하지 않는 모험가입니다.<br>이제 그 혼란 속에서 살아남기 위해 본능적으로 집어 든 물건이 있습니다.",
-        "도서관": "정적과 지식을 선택한 당신은, <b>본질과 이치</b>를 탐구하는 현자입니다.<br>이제 그 깊은 사유를 완성하기 위해 본능적으로 집어 든 물건이 있습니다.",
-        "주거지": "온기와 냄새를 선택한 당신은, <b>사람과 마음</b>을 먼저 살피는 치유자입니다.<br>이제 그 소중한 것들을 지키기 위해 본능적으로 집어 든 물건이 있습니다.",
-        "공방": "불꽃과 소리를 선택한 당신은, <b>변화와 창조</b>를 즐기는 혁명가입니다.<br>이제 무언가를 만들어내기 위해 본능적으로 집어 든 물건이 있습니다."
+        "시장": "소음과 열기를 선택한 당신은, <strong>흐름과 변화</strong>를 두려워하지 않는 모험가입니다.<br>이제 그 혼란 속에서 살아남기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "도서관": "정적과 지식을 선택한 당신은, <strong>본질과 이치</strong>를 탐구하는 현자입니다.<br>이제 그 깊은 사유를 완성하기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "주거지": "온기와 냄새를 선택한 당신은, <strong>사람과 마음</strong>을 먼저 살피는 치유자입니다.<br>이제 그 소중한 것들을 지키기 위해 본능적으로 집어 든 물건이 있습니다.",
+        "공방": "불꽃과 소리를 선택한 당신은, <strong>변화와 창조</strong>를 즐기는 혁명가입니다.<br>이제 무언가를 만들어내기 위해 본능적으로 집어 든 물건이 있습니다."
     }
     current_bridge = bridge_texts.get(loc_name, "당신의 무의식이 이끄는 곳에 도착했습니다.")
 
@@ -178,7 +211,7 @@ elif st.session_state.step == 2:
     <div class='scenario-box'>
         "{current_bridge}<br><br>
         낡은 가방 안에는 네 가지 물건이 들어있습니다.<br>
-        무엇인지 확인하지 않고, <b>손끝에 닿는 촉감만으로</b> 하나를 꺼냅니다."
+        무엇인지 확인하지 않고, <strong>손끝에 닿는 촉감만으로</strong> 하나를 꺼냅니다."
     </div>
     """, unsafe_allow_html=True)
 
@@ -226,7 +259,6 @@ elif st.session_state.step == 3:
         loc = st.session_state.archetype['loc']
         tool = st.session_state.archetype['tool']
         
-        # [수정됨] v1.5: '내면으로의 초대' - 평가가 아닌 공감으로 시작
         intro_text = f"""
         🕯️ **내면으로의 초대**
         
@@ -237,7 +269,6 @@ elif st.session_state.step == 3:
         """
         st.info(intro_text, icon="🕯️")
         
-        # [수정됨] AI에게 보내는 첫 지령: '감정 코칭'과 '거울 기법' 지시
         initial_prompt = f"""
         사용자는 [{loc}]을 선택했고, [{tool}]을 집어들었어.
         
